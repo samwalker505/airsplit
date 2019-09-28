@@ -148,14 +148,17 @@ app.intent('Forget everything', conv => {
 export const dialogflowFirebaseFulfillment = functions.https.onRequest(app);
 
 export const generateCsv = functions.https.onRequest(async (req, res) => {
-  const { username, tripname } = req.query
-  const payeeNames = (await Trip.getUsersByTripName(tripName)).map(u => user.name);
-  const paymentSummary = await Transaction.getPayable(tripname, username, payeeNames);
+  const { username, tripname } = req.query;
+  const payeeNames = (await Trip.getUsersByTripName(tripName)).map(
+    u => user.name
+  );
+  const paymentSummary = await Transaction.getPayable({
+    tripname,
+    username,
+    payeeNames
+  });
   const csv = json2csv(paymentSummary);
-  res.setHeader(
-    "Content-disposition",
-    "attachment; filename=report.csv"
-  )
-  res.set("Content-Type", "text/csv")
-  res.status(200).send(csv)
+  res.setHeader('Content-disposition', 'attachment; filename=report.csv');
+  res.set('Content-Type', 'text/csv');
+  res.status(200).send(csv);
 });
