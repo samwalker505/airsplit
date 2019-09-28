@@ -156,11 +156,14 @@ async function getPaymentSummary({
   const currencies = transactions
     .map(tx => tx.currency)
     .filter((value, i, self) => self.indexOf(value) === i);
-  const { data: rates } = await axios.get(
-    `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${baseCurrency},${currencies.join(
-      ','
-    )}`
-  );
+  const url = `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${[baseCurrency, ...currencies].join(
+    ','
+  )}`;
+  console.log('get currency list', url);
+  const { data: { rates } } = await axios.get(url);
+  console.log(rates);
+  console.log(transactions);
+  
 
   const breakdown: { [currency: string]: number } = transactions.reduce(
     (acc, cur) => {
