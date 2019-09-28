@@ -36,6 +36,7 @@ export const joinTrip = functions.https.onRequest(async (req, res) => {
     tripName: 'Chisino'
   };
   const trip = await Trip.joinTrip(params);
+  return trip;
 });
 
 // export const testDb = functions.https.onRequest(async (req, res) => {

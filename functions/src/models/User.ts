@@ -69,7 +69,7 @@ export async function findOrCreateUser(params: {
     return user;
   } else {
     const userToSave = await create(params);
-    save(userToSave);
+    await save(userToSave);
     user = await findByEmail(params.email);
     return user;
   }
