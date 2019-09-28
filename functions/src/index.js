@@ -12,7 +12,10 @@ import {
 } from 'actions-on-google';
 
 import * as User from './models/User';
+import * as Transaction from './models/Transaction';
+import findByString from './models/Currency';
 import * as Trip from './models/Trip';
+import * as Currency from './models/Currency';
 
 // Instantiate the Dialogflow client.
 const app = dialogflow({ debug: true });
@@ -103,7 +106,7 @@ app.intent('join_group', async (conv, { group_name, name }) => {
   //TODO: call join group(group_name, name)
   //      if group not exist then return
 
-  conv.data.name = name;
+  conv.user.storage.name = name;
   console.log('joining group with: ', name);
 
   const params = {
@@ -127,19 +130,72 @@ app.intent('join_group', async (conv, { group_name, name }) => {
   try {
     const joinedTrip = await Trip.joinTrip(tripParam);
     console.log('Joined trip: ', joinedTrip);
-    conv.data.tripName = group_name;
-    conv.close('Joined Trip "' + group_name + '" as ' + '"' + name + '".');
+    conv.user.storage.tripName = group_name;
+    conv.ask('Joined Trip "' + group_name + '" as ' + '"' + name + '".');
   } catch (e) {
     console.error('ERROR IN joining trip');
     console.error(e);
-    conv.close('Cannot find Trip "' + group_name + '" !');
+    conv.ask('Cannot find Trip "' + group_name + '" !');
   }
 });
 
-app.intent('Forget everything', conv => {
-  conv.ask('User storage: ', conv.user.storage);
-  conv.user.storage = {};
-  conv.ask(`Alright, I forgot your last result.`);
+// app.intent('Forget everything', conv => {
+//   conv.ask('User storage: ', conv.user.storage);
+//   conv.user.storage = {};
+//   conv.ask(`Alright, I forgot your last result.`);
+// });
+
+app.intent('split_bill', async (conv, { item, names, amount, currency }) => {
+  console.log('SPLITTING BILL');
+  console.log(conv.user.storage);
+  const storage = conv.user.storage;
+  const group_name = storage.tripName; //TODO get trip name from CONTEXT
+  const debitor = storage.name; //TODO get user name from STORAGE
+  console.log('group name', group_name);
+  console.log('debitors', debitor);
+  const creditors = names; //list of names
+  console.log('CREDITORS: ', creditors);
+  let res = '';
+
+  // if (!currency) {
+  //   currency = await Trip.findByName(group_name).currency;
+  // }
+
+  try {
+    const billParam = {
+      tripName: group_name,
+      creditors: creditors,
+      debitor: debitor,
+      title: item,
+      amount: amount,
+      currency: Currency.USD
+    };
+
+    console.log('Spliting bill: ', billParam);
+    const billRes = await Transaction.splitNewBill(billParam);
+    console.log('bill response', billRes);
+  } catch (e) {
+    res = 'Sorry, ' + e + ' .';
+    console.error(res);
+    conv.ask(res);
+  }
+
+  // res = `Ok, bill $currency, {1} {2} is splited among {3}`
+  //   currency,
+  //   amount,
+  //   item,
+  //   names
+  // );
+  res =
+    'Ok, billed amount' +
+    amount +
+    ' ' +
+    currency +
+    ' for ' +
+    item +
+    ' with ' +
+    names.toString();
+  conv.ask(res);
 });
 
 export const dialogflowFirebaseFulfillment = functions.https.onRequest(app);
