@@ -33,7 +33,8 @@ export async function findByName(name: string): Promise<ITrip> {
     .limit(1)
     .get();
   if (!snapshot.empty) {
-    return snapshot.docs[0].data() as ITrip;
+    const doc = snapshot.docs[0];
+    return { ...doc.data(), id: doc.id } as ITrip;
   }
   throw new Error('Cannot find a trip with name ' + name);
 }
