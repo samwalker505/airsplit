@@ -9,7 +9,8 @@
     "checkJs": false,
     "allowJs": true,
     "target": "es2017",
-    "lib": ["es2019"]
+    "lib": ["es2019"],
+    "esModuleInterop": true
   },
   "compileOnSave": true,
   "include": ["src"]
