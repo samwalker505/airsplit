@@ -58,7 +58,7 @@ app.intent(
 
 // TODO:
 app.intent('create_group', async (conv, { group_name, currency_name }) => {
-  const name = onv.user.storage.userName;
+  const name = conv.user.storage.userName;
 
   const params = {
     email: name,
