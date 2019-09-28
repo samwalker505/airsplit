@@ -157,7 +157,7 @@ export async function computePayable({
     .map(tx => tx.currency)
     .filter((value, i, self) => self.indexOf(value) === i);
   const { rates } = await fetch(
-    `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${currencies.join(
+    `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${baseCurrency},${currencies.join(
       ','
     )}`
   );
@@ -165,7 +165,7 @@ export async function computePayable({
   const breakdown: { [currency: string]: number } = transactions.reduce(
     (acc, cur) => {
       const total = acc[cur.currency] || 0;
-      return { ...acc, total: total + cur.amount };
+      return { ...acc, [cur.currency]: total + cur.amount };
     },
     {} as { [currency: string]: number }
   );
