@@ -28,6 +28,14 @@ export const createTrip = functions.https.onRequest(async (req, res) => {
     res.json(trip);
 });
 
+export const joinTrip = functions.https.onRequest(async (req, res) => {
+    const params = {
+        userName: 'Sam',
+        email: 'samwalker505@gmail.com',
+        tripName: 'Chisino',
+    }
+    const trip = await Trip.joinTrip(params);
+})
 
 // export const testDb = functions.https.onRequest(async (req, res) => {
 //   const docRef = db.collection('testUser');
