@@ -178,3 +178,20 @@ export async function computePayable({
     breakdown
   };
 }
+
+export async function getPayableTransactions(userName: string) {
+    const user = await User.findByName(userName);
+    const snapshot = await getCollection()
+        .where('creditor_user_id', '==', user.id!)
+        .where('trip_id', '==', user.current_trip_id!)
+        .get();
+    if (snapshot.empty) {
+        throw new Error('no transactions');
+    }
+
+    const transactions = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+    }))
+    return transactions;
+}

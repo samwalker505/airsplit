@@ -15,6 +15,7 @@ import {
 
 import * as User from './models/User';
 import * as Trip from './models/Trip';
+import { Transaction } from './models/Transaction';
 
 // Instantiate the Dialogflow client.
 const app = dialogflow({ debug: true });
@@ -109,8 +110,9 @@ app.intent('join_group', async (conv, { group_name, name }) => {
 export const dialogflowFirebaseFulfillment = functions.https.onRequest(app);
 
 export const generateCsv = functions.https.onRequest(async (req, res) => {
-  const report = [{"price": 1}, {"price": 2}];
-  const csv = json2csv(report)
+  const { username } = req.query
+  const transactions = await Transaction.getPayableTransactions(username)
+  const csv = json2csv(transactions)
   res.setHeader(
     "Content-disposition",
     "attachment; filename=report.csv"
