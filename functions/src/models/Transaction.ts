@@ -113,6 +113,14 @@ export async function splitNewBill(bill: Bill) {
   );
 }
 
+export interface PaymentSummary {
+  payerName: string;
+  payeeName: string;
+  total: number;
+  base: Currency;
+  breakdown: { [currency: string]: number };
+}
+
 async function getPaymentSummary({
   tripName,
   payerName,
@@ -123,11 +131,7 @@ async function getPaymentSummary({
   payerName: string;
   payeeName: string;
   currency?: Currency;
-}): Promise<{
-  total: number;
-  base: Currency;
-  breakdown: { [currency: string]: number };
-}> {
+}): Promise<PaymentSummary> {
   if (!tripName) {
     throw new Error('No trip name is specified.');
   }
@@ -165,6 +169,8 @@ async function getPaymentSummary({
   );
 
   return {
+    payerName,
+    payeeName,
     total: Object.entries(breakdown)
       .map(([key, value]) => (value * rates[key]) / rates[baseCurrency])
       .reduce((acc, cur) => acc + cur, 0),
@@ -173,7 +179,7 @@ async function getPaymentSummary({
   };
 }
 
-export default async function getReceivable({
+export async function getReceivable({
   tripName,
   userName,
   payerNames,
@@ -196,7 +202,7 @@ export default async function getReceivable({
   );
 }
 
-export default async function getPayable({
+export async function getPayable({
   tripName,
   userName,
   payeeNames,
