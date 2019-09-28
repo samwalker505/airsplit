@@ -1,21 +1,21 @@
 import * as admin from 'firebase-admin';
 
 export interface IUser {
-    id?: string;
-    email: string;
-    name?: string;
-    current_trip_id?: string;
-    created_at?: Date;
-    updated_at?: Date;
+  id?: string;
+  email: string;
+  name?: string;
+  current_trip_id?: string;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 const db = admin.firestore();
 
-export function getCollection() {
+function getCollection() {
   return db.collection('user');
 }
 
-export async function findBy(key: string, value: string) {
+async function findBy(key: string, value: string): Promise<IUser> {
   const snapshot = await getCollection()
     .where(key, '==', value)
     .limit(1)
@@ -24,14 +24,14 @@ export async function findBy(key: string, value: string) {
     const doc = snapshot.docs[0];
     return { ...doc.data(), id: doc.id } as IUser;
   }
-  return null;
+  throw new Error('Cannot find a user with ' + key + ' ' + value);
 }
 
-export async function findByEmail(email: string) {
+export async function findByEmail(email: string): Promise<IUser> {
   return findBy('email', email);
 }
 
-export async function findByName(name: string) {
+export async function findByName(name: string): Promise<IUser> {
   return findBy('name', name);
 }
 

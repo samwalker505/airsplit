@@ -1,1 +1,6 @@
-export type Currency = 'HKD' | 'JPY' | 'RMB' | 'USD';
+export enum Currency {
+  HKD = 'HKD',
+  JPY = 'JPY',
+  RMB = 'RMB',
+  USD = 'USD'
+}
