@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as User from './User';
+import * as TripHistory from './TripHistory';
 import * as errors from '../errors';
 import { Currency } from './Currency';
 
@@ -32,12 +33,13 @@ export async function findByName(name: string): Promise<ITrip> {
     .limit(1)
     .get();
   if (!snapshot.empty) {
-    return snapshot.docs[0].data() as ITrip;
+    const doc = snapshot.docs[0];
+    return { ...doc.data(), id: doc.id } as ITrip;
   }
   throw new Error('Cannot find a trip with name ' + name);
 }
 
-export async function create(params: {
+export function create(params: {
   user_id: string;
   name: string;
   currency: Currency;
@@ -75,12 +77,7 @@ export async function findOrCreateTrip(params: {
 }) {
   const { email, name, currency } = params;
   const user = await User.findByEmail(email);
-  if (!user) {
-    throw new Error(errors.ERR_ENTITY_NOT_FOUND);
-  }
-  if (await findByName(name)) {
-    throw new Error(errors.ERR_DUPLICATE_KEY);
-  }
+  await findByName(name);
   const tripToSave = await create({
     user_id: user.id!,
     name,
@@ -103,11 +100,35 @@ export async function joinTrip({
     await findByName(tripName)
   ];
 
-  if (!user || !trip) {
-    throw new Error(errors.ERR_ENTITY_NOT_FOUND);
-  }
-
   user.current_trip_id = trip.id;
   await User.save(user);
   return trip;
 }
+
+export async function endTrip({ tripName }: { tripName: string }) {
+    const trip = await findByName(tripName);
+    trip.status = "archived"
+    const users = await getUsersByTripName(name);
+    users.forEach(user => {
+        user.current_trip_id = null;
+    });
+
+    const tripHistories = users.map((user) => ({ user_id: user.id!, trip_id: trip.id!} as TripHistory.ITripHistory));
+    await Promise.all(tripHistories.map(TripHistory.save));
+    return { trip, tripHistories }
+}
+
+export async function getUsersByTripName(tripName: string) {
+    const trip = await findByName(tripName);
+    const snapshot = await db.collection('user')
+        .where('current_trip_id', '==', trip.id)
+        .get();
+
+    if (snapshot.empty) {
+        throw new Error(errors.ERR_ENTITY_NOT_FOUND);
+    } 
+
+    const users = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id } as User.IUser));
+    return users;
+}
+
