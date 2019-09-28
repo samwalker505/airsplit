@@ -15,7 +15,7 @@ import {
 
 import * as User from './models/User';
 import * as Trip from './models/Trip';
-import { Transaction } from './models/Transaction';
+import * as Transaction from './models/Transaction';
 
 // Instantiate the Dialogflow client.
 const app = dialogflow({ debug: true });
@@ -148,8 +148,10 @@ app.intent('Forget everything', conv => {
 export const dialogflowFirebaseFulfillment = functions.https.onRequest(app);
 
 export const generateCsv = functions.https.onRequest(async (req, res) => {
-  const { username, tripname } = req.query
-  const payeeNames = (await Trip.getUsersByTripName(tripName)).map(u => user.name);
+  const { username, tripname } = req.query;
+  console.log(username, tripname);
+  const payeeNames = (await Trip.getUsersByTripName(tripname)).map(user => user.name);
+  console.log('payeeNames', payeeNames);
   const paymentSummary = await Transaction.getPayable(tripname, username, payeeNames);
   const csv = json2csv(paymentSummary);
   res.setHeader(
