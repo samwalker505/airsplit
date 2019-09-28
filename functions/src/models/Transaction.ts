@@ -113,14 +113,14 @@ export async function splitNewBill(bill: Bill) {
   );
 }
 
-export async function computePayable({
+async function getPaymentSummary({
   tripName,
-  payerNames,
+  payerName,
   payeeName,
   currency
 }: {
   tripName: string;
-  payerNames: string[];
+  payerName: string;
   payeeName: string;
   currency?: Currency;
 }): Promise<{
@@ -136,21 +136,15 @@ export async function computePayable({
     throw new Error('Trip ' + tripName + ' has a null id');
   }
 
-  const payers = await Promise.all(
-    payerNames.map(name => User.findByName(name))
-  );
+  const payer = await User.findByName(payerName);
+  if (!payer.id) {
+    throw new Error('User ' + payer.name + ' does not have an id');
+  }
 
   const payee = await User.findByName(payeeName);
   if (!payee.id) throw new Error('User ' + payee.name + ' does not have an id');
 
-  const promises = payers.flatMap(payer => {
-    if (!payer.id) {
-      throw new Error('User ' + payer.name + ' does not have an id');
-    }
-    return findByCounterParties(payer.id, payee.id as string);
-  });
-
-  const transactions = (await Promise.all(promises)).flat();
+  const transactions = await findByCounterParties(payer.id, payee.id);
 
   const baseCurrency = currency || trip.currency;
   const currencies = transactions
@@ -177,4 +171,50 @@ export async function computePayable({
     base: baseCurrency,
     breakdown
   };
+}
+
+export default async function getReceivable({
+  tripName,
+  userName,
+  payerNames,
+  currency
+}: {
+  tripName: string;
+  userName: string;
+  payerNames: string[];
+  currency?: Currency;
+}) {
+  return Promise.all(
+    payerNames.map(payerName =>
+      getPaymentSummary({
+        tripName,
+        payerName,
+        payeeName: userName,
+        currency
+      })
+    )
+  );
+}
+
+export default async function getPayable({
+  tripName,
+  userName,
+  payeeNames,
+  currency
+}: {
+  tripName: string;
+  userName: string;
+  payeeNames: string[];
+  currency?: Currency;
+}) {
+  return Promise.all(
+    payeeNames.map(payeeName =>
+      getPaymentSummary({
+        tripName,
+        payerName: userName,
+        payeeName,
+        currency
+      })
+    )
+  );
 }
