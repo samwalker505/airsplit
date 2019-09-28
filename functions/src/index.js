@@ -28,6 +28,7 @@ app.intent('Default Welcome Intent', conv => {
         permissions: 'NAME'
       })
     );
+    // conv.ask(new SignIn('To get your account details'));
   } else {
     conv.ask(`Hi again, ${name}. Having a fun trip?`);
   }
@@ -42,67 +43,66 @@ app.intent(
       // If the user denied our request, go ahead with the conversation.
       // TODO
       conv.ask(`I need your permission to proceed.`);
-      conv.ask(
-        'You can create group by saying Create London trip or Join group by saying Join London trip'
-      );
     } else {
       // If the user accepted our request, store their name in
       // the 'conv.user.storage' object for the duration of the conversation.
-      conv.user.storage.userName = conv.user.name.display;
-      conv.user.storage.email = conv.user.email;
-      conv.ask(`Thanks, ${conv.user.storage.userName}.`);
+
+      // TODO: STORE NAME
+      // conv.user.storage.userName = conv.user.name.display;
+      const name = conv.user.name.display;
+      conv.ask(`Thanks, ${name}.`);
       conv.ask(
         'You can create group by saying Create London trip or Join group by saying Join London trip'
       );
-
-      // TODO: get user email instead of name
-      const params = {
-        email: conv.user.storage.email,
-        name: conv.user.storage.userName
-      };
-      console.log('creating user from Actions on google');
-      console.log(params);
-
-      const user = await User.findOrCreateUser(params);
-      console.log('user created');
-      console.log(user);
     }
   }
 );
 
 app.intent('create_group', async (conv, { group_name, currency_name }) => {
-  const name = conv.user.storage.userName;
-  let params = {
-    currency: currency_name,
-    group_name: group_name,
-    name: name,
-    email: name
+  const name = conv.user.name.display;
+
+  const params = {
+    email: 'Martin Shin',
+    name: 'Martin Shin'
   };
-  const trip = await Trip.findOrCreateTrip(params);
+
+  console.log('creating user from Actions on google');
+  console.log(params);
+
+  const user = await User.findOrCreateUser(params);
+  console.log('user created');
+  console.log(user);
+
+  let trip_params = {
+    currency: currency_name,
+    name: group_name,
+    email: 'Martin Shin'
+  };
+  const trip = await Trip.findOrCreateTrip(trip_params);
   console.log('trip created');
   console.log(trip);
   conv.ask('Your trip "' + group_name + '" is created!');
 });
 
-app.intent('join_group', (conv, { group_name, name }) => {
+app.intent('join_group', async (conv, { group_name, name }) => {
   // Respond with the user's lucky number and end the conversation.
   //TODO: call join group(group_name, name)
   //      if group not exist then return
-  conv.close('Cannot find Trip "' + group_name + '" !');
-  //    if group is found
-  conv.close('Joined Trip "' + group_name + '" as ' + '"' + name + '".');
+  const tripParam = {
+    email: name,
+    tripName: group_name
+  };
+  console.log('Trip param');
+  console.log(tripParam);
+  try {
+    const joinedTrip = await Trip.joinTrip(tripParam);
+    console.log('Joined trip: ', joinedTrip);
+    conv.close('Joined Trip "' + group_name + '" as ' + '"' + name + '".');
+  } catch (e) {
+    console.error('ERROR IN joining trip');
+    console.error(e);
+    conv.close('Cannot find Trip "' + group_name + '" !');
+  }
 });
 
 export const dialogflowFirebaseFulfillment = functions.https.onRequest(app);
-
-// export const testDb = functions.https.onRequest(async (req, res) => {
-//   const docRef = db.collection('testUser');
-//   await docRef.add({
-//     first: 'Billy',
-//     last: 'Lovelace',
-//     born: 1815
-//   });
-//   res.json({
-//       status: 'ok'
-//   })
-// })

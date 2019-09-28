@@ -1,12 +1,12 @@
 import * as admin from 'firebase-admin';
 
 export interface IUser {
-    id?: string;
-    email: string;
-    name?: string;
-    current_trip_id?: string | null;
-    created_at?: Date;
-    updated_at?: Date;
+  id?: string;
+  email: string;
+  name?: string;
+  current_trip_id?: string | null;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 const db = admin.firestore();
@@ -65,11 +65,15 @@ export async function findOrCreateUser(params: {
   email: string;
 }) {
   try {
-    return findByEmail(params.email);
+    console.log('try creating user', params);
+    return await findByEmail(params.email);
   } catch (err) {
+    console.log('catch creating user', params);
     const userToSave = create(params);
+    console.log('USER TO SAVE', userToSave);
     await save(userToSave);
     const user = await findByEmail(params.email);
+    console.log('USER : ', user);
     return user;
   }
 }
