@@ -11,7 +11,7 @@ export interface ITrip {
   name: string;
   user_id: string;
   status: TripStatus;
-  currency: Currency | null;
+  currency: Currency;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -27,7 +27,7 @@ export function getCollection() {
   return db.collection('trip');
 }
 
-export async function findByName(name: string) {
+export async function findByName(name: string): Promise<ITrip> {
   const snapshot = await getCollection()
     .where('name', '==', name)
     .limit(1)
@@ -35,17 +35,17 @@ export async function findByName(name: string) {
   if (!snapshot.empty) {
     return snapshot.docs[0].data() as ITrip;
   }
-  return null;
+  throw new Error('Cannot find a trip with name ' + name);
 }
 
 export function create(params: {
   user_id: string;
   name: string;
-  currency?: Currency;
+  currency: Currency;
 }) {
   return {
     ...params,
-    currency: params.currency || null,
+    currency: params.currency,
     status: 'active' as TripStatus,
     created_at: new Date(),
     updated_at: new Date()
@@ -72,46 +72,45 @@ export async function save(trip: ITrip) {
 export async function findOrCreateTrip(params: {
   email: string;
   name: string;
-  currency?: Currency;
+  currency: Currency;
 }) {
-    const {
-        email, 
-        name,
-        currency,
-    } = params;
-    const user = await User.findByEmail(email)
-    if (!user) {
-        throw new Error(errors.ERR_ENTITY_NOT_FOUND);
-    }
-    if (await findByName(name)) {
-        throw new Error(errors.ERR_DUPLICATE_KEY);
-    }
-    const tripToSave: ITrip = create({
-        user_id: user.id!,
-        name,
-        currency
-    })
+  const { email, name, currency } = params;
+  const user = await User.findByEmail(email);
+  if (!user) {
+    throw new Error(errors.ERR_ENTITY_NOT_FOUND);
+  }
+  if (await findByName(name)) {
+    throw new Error(errors.ERR_DUPLICATE_KEY);
+  }
+  const tripToSave = await create({
+    user_id: user.id!,
+    name,
+    currency
+  });
 
-    await save(tripToSave);
-    return findByName(name);
+  await save(tripToSave);
+  return findByName(name);
 }
 
-export async function joinTrip({ userName, tripName }: {
-    userName: string,
-    tripName: string,
+export async function joinTrip({
+  email,
+  tripName
+}: {
+  email: string;
+  tripName: string;
 }) {
-    const [ user, trip ] = [
-        await User.findByName(userName),
-        await findByName(tripName),
-    ];
+  const [user, trip] = [
+    await User.findByEmail(email),
+    await findByName(tripName)
+  ];
 
-    if (!user || !trip) {
-        throw new Error(errors.ERR_ENTITY_NOT_FOUND);
-    }
+  if (!user || !trip) {
+    throw new Error(errors.ERR_ENTITY_NOT_FOUND);
+  }
 
-    user.current_trip_id = trip.id;
-    await User.save(user);
-    return trip;
+  user.current_trip_id = trip.id;
+  await User.save(user);
+  return trip;
 }
 
 export async function endTrip({ tripName }: { tripName: string }) {
