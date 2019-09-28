@@ -12,65 +12,65 @@ export interface IUser {
 const db = admin.firestore();
 
 export function getCollection() {
-    return db.collection('user')
+  return db.collection('user');
 }
 
-
 export async function findBy(key: string, value: string) {
-    const snapshot = await getCollection().where(key, '==', value).limit(1).get();
-    if (!snapshot.empty) {
-        const doc = snapshot.docs[0]
-        return { ...doc.data(), id: doc.id } as IUser;
-    }
-    return null;
+  const snapshot = await getCollection()
+    .where(key, '==', value)
+    .limit(1)
+    .get();
+  if (!snapshot.empty) {
+    const doc = snapshot.docs[0];
+    return { ...doc.data(), id: doc.id } as IUser;
+  }
+  return null;
 }
 
 export async function findByEmail(email: string) {
-    return findBy('email', email);
+  return findBy('email', email);
 }
 
 export async function findByName(name: string) {
-    return findBy('name', name);
+  return findBy('name', name);
 }
 
-
-export function create(params: {
-    email: string;
-    name: string;
-}) {
-    return {
-        ...params,
-        created_at: new Date(),
-        updated_at: new Date(),
-    }
+export function create(params: { email: string; name: string }) {
+  return {
+    ...params,
+    created_at: new Date(),
+    updated_at: new Date()
+  };
 }
 
 export async function save(user: IUser) {
-    if (user.id) {
-        await getCollection().doc(user.id).update({
-            ...user, 
-            updated_at: new Date()
-        })
-    } else {
-        await getCollection().add({
-            ...user,
-            created_at: new Date(),
-            updated_at: new Date(),
-        })
-    }
+  if (user.id) {
+    await getCollection()
+      .doc(user.id)
+      .update({
+        ...user,
+        updated_at: new Date()
+      });
+  } else {
+    await getCollection().add({
+      ...user,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+  }
 }
 
 export async function findOrCreateUser(params: {
-    name: string,
-    email: string,
+  name: string;
+  email: string;
 }) {
-    let user: IUser | null = await findByEmail(params.email);
-    if (user) {
-        return user;
-    } else {
-        const userToSave = create(params);
-        await save(userToSave)
-        user = await findByEmail(params.email);
-        return user;
-    }
+  let user: IUser | null = await findByEmail(params.email);
+  if (user) {
+    return user;
+  } else {
+    const userToSave = await create(params);
+    save(userToSave);
+    user = await findByEmail(params.email);
+    return user;
+  }
 }
