@@ -30,7 +30,6 @@ app.intent('Default Welcome Intent', conv => {
         permissions: 'NAME'
       })
     );
-    // conv.ask(new SignIn('To get your account details'));
   } else {
     conv.ask(`Hi again, ${name}. Having a fun trip?`);
   }
@@ -49,8 +48,7 @@ app.intent(
       // If the user accepted our request, store their name in
       // the 'conv.user.storage' object for the duration of the conversation.
 
-      // TODO: STORE NAME
-      // conv.user.storage.userName = conv.user.name.display;
+      conv.user.storage.userName = conv.user.name.display;
       const name = conv.user.name.display;
       conv.ask(`Thanks, ${name}.`);
       conv.ask(
@@ -60,12 +58,13 @@ app.intent(
   }
 );
 
+// TODO:
 app.intent('create_group', async (conv, { group_name, currency_name }) => {
-  const name = conv.user.name.display;
+  const name = conv.user.storage.userName;
 
   const params = {
-    email: 'Martin Shin',
-    name: 'Martin Shin'
+    email: name,
+    name: name
   };
 
   console.log('creating user from Actions on google');
@@ -78,7 +77,7 @@ app.intent('create_group', async (conv, { group_name, currency_name }) => {
   let trip_params = {
     currency: currency_name,
     name: group_name,
-    email: 'Martin Shin'
+    email: name
   };
   const trip = await Trip.findOrCreateTrip(trip_params);
   console.log('trip created');

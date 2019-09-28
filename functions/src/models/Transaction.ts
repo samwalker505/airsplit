@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import fetch from 'unfetch';
+import axios from 'axios';
 import { Currency } from './Currency';
 import * as Trip from './Trip';
 import * as User from './User';
@@ -50,7 +50,7 @@ export async function findByCounterParties(
   if (!snapshot.empty) {
     return snapshot.docs.map(doc => doc.data() as ITransaction);
   }
-  throw new Error('Cannot find a trip with name ' + name);
+  throw new Error('Cannot find transaction');
 }
 
 export interface Bill {
@@ -156,7 +156,7 @@ export async function computePayable({
   const currencies = transactions
     .map(tx => tx.currency)
     .filter((value, i, self) => self.indexOf(value) === i);
-  const { rates } = await fetch(
+  const { data: rates } = await axios.get(
     `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${baseCurrency},${currencies.join(
       ','
     )}`
