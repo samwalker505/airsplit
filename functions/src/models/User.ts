@@ -14,13 +14,24 @@ export function getCollection() {
     return db.collection('user')
 }
 
-export async function findByEmail(email: string) {
-    const snapshot = await getCollection().where('email', '==', email).limit(1).get();
+
+export async function findBy(key: string, value: string) {
+    const snapshot = await getCollection().where(key, '==', value).limit(1).get();
     if (!snapshot.empty) {
-        return snapshot.docs[0].data() as IUser;
+        const doc = snapshot.docs[0]
+        return { ...doc.data(), id: doc.id } as IUser;
     }
     return null;
 }
+
+export async function findByEmail(email: string) {
+    return findBy('email', email);
+}
+
+export async function findByName(name: string) {
+    return findBy('name', name);
+}
+
 
 export async function create(params: {
     email: string;

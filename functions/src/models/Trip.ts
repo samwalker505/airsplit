@@ -9,7 +9,7 @@ export interface ITrip {
     name: string;
     user_id: string;
     status: TripStatus;
-    currency?: Currency;
+    currency: Currency | null;
     created_at?: Date;
     updated_at?: Date;
 }
@@ -40,6 +40,7 @@ export async function create(params: {
 }){
     return {
         ...params,
+        currency: params.currency || null,
         status: 'active' as TripStatus,
         created_at: new Date(),
         updated_at: new Date(),
@@ -75,7 +76,7 @@ export async function findOrCreateTrip(params: {
     if (!user) {
         throw new Error('ERR_ENTITY_NOT_FOUND');
     }
-    if (findByName(name)) {
+    if (await findByName(name)) {
         throw new Error('ERR_DUPLICATE_KEY');
     }
     const tripToSave: ITrip = await create({
@@ -84,7 +85,18 @@ export async function findOrCreateTrip(params: {
         currency
     })
 
+    console.log('user');
+    console.log(tripToSave);
+
     await save(tripToSave);
     return findByName(name);
+}
+
+export async function joinTrip(params: {
+    userName: string,
+    email: string,
+    tripName: string,
+}) {
+    console.log('hi');
 }
 
