@@ -185,6 +185,7 @@ export async function getPayableTransactions(userName: string) {
         .where('creditor_user_id', '==', user.id!)
         .where('trip_id', '==', user.current_trip_id!)
         .get();
+        
     if (snapshot.empty) {
         throw new Error('no transactions');
     }
