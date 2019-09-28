@@ -48,7 +48,7 @@ export async function findByCounterParties(
     .limit(1)
     .get();
   if (!snapshot.empty) {
-    return snapshot.docs.map(doc => doc.data() as ITransaction);
+    return snapshot.docs.map(doc => (({ id: doc.id, ...doc.data() }) as ITransaction));
   }
   throw new Error('Cannot find transaction');
 }
@@ -213,6 +213,7 @@ export async function getPayable({
   payeeNames: string[];
   currency?: Currency;
 }) {
+  const payeeNamesList = ;
   return Promise.all(
     payeeNames.map(payeeName =>
       getPaymentSummary({
