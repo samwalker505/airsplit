@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as User from './User';
+import * as errors from '../errors';
 import { Currency } from './Currency';
 
 type TripStatus = 'active' | 'archived';
@@ -72,31 +73,42 @@ export async function findOrCreateTrip(params: {
   name: string;
   currency?: Currency;
 }) {
-  const { email, name, currency } = params;
-  const user = await User.findByEmail(email);
-  if (!user) {
-    throw new Error('ERR_ENTITY_NOT_FOUND');
-  }
-  if (await findByName(name)) {
-    throw new Error('ERR_DUPLICATE_KEY');
-  }
-  const tripToSave: ITrip = await create({
-    user_id: user.id!,
-    name,
-    currency
-  });
+    const {
+        email, 
+        name,
+        currency,
+    } = params;
+    const user = await User.findByEmail(email)
+    if (!user) {
+        throw new Error(errors.ERR_ENTITY_NOT_FOUND);
+    }
+    if (await findByName(name)) {
+        throw new Error(errors.ERR_DUPLICATE_KEY);
+    }
+    const tripToSave: ITrip = create({
+        user_id: user.id!,
+        name,
+        currency
+    })
 
-  console.log('user');
-  console.log(tripToSave);
-
-  await save(tripToSave);
-  return findByName(name);
+    await save(tripToSave);
+    return findByName(name);
 }
 
-export async function joinTrip(params: {
-  userName: string;
-  email: string;
-  tripName: string;
+export async function joinTrip({ email, tripName }: {
+    email: string,
+    tripName: string,
 }) {
-  console.log('hi');
+    const [ user, trip ] = [
+        await User.findByEmail(email),
+        await findByName(tripName),
+    ];
+
+    if (!user || !trip) {
+        throw new Error(errors.ERR_ENTITY_NOT_FOUND);
+    }
+
+    user.current_trip_id = trip.id;
+    await User.save(user);
+    return trip;
 }
