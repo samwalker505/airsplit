@@ -38,6 +38,15 @@ export const createTrip = functions.https.onRequest(async (req, res) => {
   res.json(trip);
 });
 
+export const joinTrip = functions.https.onRequest(async (req, res) => {
+  const params = {
+    userName: 'Sam',
+    tripName: 'Chisino'
+  };
+  const trip = await Trip.joinTrip(params);
+  res.json(trip);
+});
+
 // // Handle the Dialogflow intent named 'Default Welcome Intent'.
 app.intent("Default Welcome Intent", conv => {
   const name = conv.user.storage.userName;
