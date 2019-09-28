@@ -16,11 +16,11 @@ export interface ITransaction {
 
 const db = admin.firestore();
 
-export function getCollection() {
+function getCollection() {
   return db.collection('transaction');
 }
 
-export async function saveCreation(transaction: ITransaction) {
+async function saveCreation(transaction: ITransaction) {
   return await getCollection().add({
     ...transaction,
     created_at: new Date(),
@@ -28,7 +28,7 @@ export async function saveCreation(transaction: ITransaction) {
   });
 }
 
-export async function saveUpdate(transaction: ITransaction) {
+async function saveUpdate(transaction: ITransaction) {
   if (!transaction.id) throw new Error('Id is null for transaction');
   return await getCollection()
     .doc(transaction.id)

@@ -1,11 +1,12 @@
 import * as admin from 'firebase-admin';
 
 export interface IUser {
-  id?: string;
-  email: string;
-  name?: string;
-  created_at?: Date;
-  updated_at?: Date;
+    id?: string;
+    email: string;
+    name?: string;
+    current_trip_id?: string;
+    created_at?: Date;
+    updated_at?: Date;
 }
 
 const db = admin.firestore();
@@ -34,7 +35,7 @@ export async function findByName(name: string) {
   return findBy('name', name);
 }
 
-export async function create(params: { email: string; name: string }) {
+export function create(params: { email: string; name: string }) {
   return {
     ...params,
     created_at: new Date(),
@@ -68,7 +69,7 @@ export async function findOrCreateUser(params: {
     return user;
   } else {
     const userToSave = await create(params);
-    await save(userToSave);
+    save(userToSave);
     user = await findByEmail(params.email);
     return user;
   }
