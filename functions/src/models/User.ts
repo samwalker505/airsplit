@@ -4,6 +4,7 @@ export interface IUser {
     id?: string;
     email: string;
     name?: string;
+    current_trip_id?: string;
     created_at?: Date;
     updated_at?: Date;
 }
