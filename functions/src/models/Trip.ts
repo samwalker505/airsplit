@@ -76,12 +76,7 @@ export async function findOrCreateTrip(params: {
 }) {
   const { email, name, currency } = params;
   const user = await User.findByEmail(email);
-  if (!user) {
-    throw new Error(errors.ERR_ENTITY_NOT_FOUND);
-  }
-  if (await findByName(name)) {
-    throw new Error(errors.ERR_DUPLICATE_KEY);
-  }
+  await findByName(name);
   const tripToSave = await create({
     user_id: user.id!,
     name,
@@ -104,10 +99,6 @@ export async function joinTrip({
     await findByName(tripName)
   ];
 
-  if (!user || !trip) {
-    throw new Error(errors.ERR_ENTITY_NOT_FOUND);
-  }
-
   user.current_trip_id = trip.id;
   await User.save(user);
   return trip;
@@ -115,10 +106,6 @@ export async function joinTrip({
 
 export async function endTrip({ tripName }: { tripName: string }) {
     const trip = await findByName(tripName);
-    if (!trip) {
-        throw new Error(errors.ERR_ENTITY_NOT_FOUND)
-    }
-
     trip.status = "archived"
     const users = await getUsersByTripName(name);
     users.forEach(user => {
@@ -132,9 +119,6 @@ export async function endTrip({ tripName }: { tripName: string }) {
 
 export async function getUsersByTripName(tripName: string) {
     const trip = await findByName(tripName);
-    if (!trip) {
-        throw new Error(errors.ERR_ENTITY_NOT_FOUND);
-    }
     const snapshot = await db.collection('user')
         .where('current_trip_id', '==', trip.id)
         .get();

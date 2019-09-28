@@ -64,13 +64,12 @@ export async function findOrCreateUser(params: {
   name: string;
   email: string;
 }) {
-  let user: IUser | null = await findByEmail(params.email);
-  if (user) {
-    return user;
-  } else {
+  try {
+    return findByEmail(params.email);
+  } catch (err) {
     const userToSave = create(params);
     await save(userToSave);
-    user = await findByEmail(params.email);
+    const user = await findByEmail(params.email);
     return user;
   }
 }
