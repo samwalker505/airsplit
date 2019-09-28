@@ -77,15 +77,18 @@ export async function findOrCreateTrip(params: {
 }) {
   const { email, name, currency } = params;
   const user = await User.findByEmail(email);
-  await findByName(name);
-  const tripToSave = await create({
-    user_id: user.id!,
-    name,
-    currency
-  });
-
-  await save(tripToSave);
-  return findByName(name);
+  try {
+    return await findByName(name);
+  } catch {
+    const tripToSave = await create({
+        user_id: user.id!,
+        name,
+        currency
+      });
+    
+      await save(tripToSave);
+      return findByName(name);
+  }
 }
 
 export async function joinTrip({
