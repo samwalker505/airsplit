@@ -34,18 +34,6 @@ export const joinTrip = functions.https.onRequest(async (req, res) => {
         email: 'samwalker505@gmail.com',
         tripName: 'Chisino',
     }
-    const trip = await Trip.joinTrip(params);
+    const joinedTrip = await Trip.joinTrip(params);
+    return res.json(joinedTrip);
 })
-
-// export const testDb = functions.https.onRequest(async (req, res) => {
-//   const docRef = db.collection('testUser');
-//   await docRef.add({
-//     first: 'Billy',
-//     last: 'Lovelace',
-//     born: 1815
-//   });
-//   res.json({
-//       status: 'ok'
-//   })
-// })
-

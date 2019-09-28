@@ -33,7 +33,7 @@ export async function findByName(name: string) {
 }
 
 
-export async function create(params: {
+export function create(params: {
     email: string;
     name: string;
 }) {
@@ -67,7 +67,7 @@ export async function findOrCreateUser(params: {
     if (user) {
         return user;
     } else {
-        const userToSave = await create(params);
+        const userToSave = create(params);
         await save(userToSave)
         user = await findByEmail(params.email);
         return user;
