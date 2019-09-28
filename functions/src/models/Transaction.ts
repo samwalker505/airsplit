@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import fetch from 'unfetch';
 import { Currency } from './Currency';
 import * as Trip from './Trip';
 import * as User from './User';
@@ -35,6 +36,21 @@ export async function saveUpdate(transaction: ITransaction) {
   return await getCollection()
     .doc(transaction.id)
     .update({ ...transaction, updated_at: new Date() });
+}
+
+export async function findByCounterParties(
+  creditorId: string,
+  debitorId: string
+): Promise<ITransaction[]> {
+  const snapshot = await getCollection()
+    .where('creditor_user_id', '==', creditorId)
+    .where('debitor_user_id', '==', debitorId)
+    .limit(1)
+    .get();
+  if (!snapshot.empty) {
+    return snapshot.docs.map(doc => doc.data() as ITransaction);
+  }
+  throw new Error('Cannot find a trip with name ' + name);
 }
 
 export interface Bill {
@@ -95,4 +111,70 @@ export async function splitNewBill(bill: Bill) {
       })
     )
   );
+}
+
+export async function computePayable({
+  tripName,
+  payerNames,
+  payeeName,
+  currency
+}: {
+  tripName: string;
+  payerNames: string[];
+  payeeName: string;
+  currency?: Currency;
+}): Promise<{
+  total: number;
+  base: Currency;
+  breakdown: { [currency: string]: number };
+}> {
+  if (!tripName) {
+    throw new Error('No trip name is specified.');
+  }
+  const trip = await Trip.findByName(tripName);
+  if (!trip.id) {
+    throw new Error('Trip ' + tripName + ' has a null id');
+  }
+
+  const payers = await Promise.all(
+    payerNames.map(name => User.findByName(name))
+  );
+
+  const payee = await User.findByName(payeeName);
+  if (!payee.id) throw new Error('User ' + payee.name + ' does not have an id');
+
+  const promises = payers.flatMap(payer => {
+    if (!payer.id) {
+      throw new Error('User ' + payer.name + ' does not have an id');
+    }
+    return findByCounterParties(payer.id, payee.id as string);
+  });
+
+  const transactions = (await Promise.all(promises)).flat();
+
+  const baseCurrency = currency || trip.currency;
+  const currencies = transactions
+    .map(tx => tx.currency)
+    .filter((value, i, self) => self.indexOf(value) === i);
+  const { rates } = await fetch(
+    `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${baseCurrency},${currencies.join(
+      ','
+    )}`
+  );
+
+  const breakdown: { [currency: string]: number } = transactions.reduce(
+    (acc, cur) => {
+      const total = acc[cur.currency] || 0;
+      return { ...acc, [cur.currency]: total + cur.amount };
+    },
+    {} as { [currency: string]: number }
+  );
+
+  return {
+    total: Object.entries(breakdown)
+      .map(([key, value]) => (value * rates[key]) / rates[baseCurrency])
+      .reduce((acc, cur) => acc + cur, 0),
+    base: baseCurrency,
+    breakdown
+  };
 }

@@ -106,29 +106,34 @@ export async function joinTrip({
 }
 
 export async function endTrip({ tripName }: { tripName: string }) {
-    const trip = await findByName(tripName);
-    trip.status = "archived"
-    const users = await getUsersByTripName(name);
-    users.forEach(user => {
-        user.current_trip_id = null;
-    });
+  const trip = await findByName(tripName);
+  trip.status = 'archived';
+  const users = await getUsersByTripName(tripName);
+  users.forEach(user => {
+    user.current_trip_id = null;
+  });
 
-    const tripHistories = users.map((user) => ({ user_id: user.id!, trip_id: trip.id!} as TripHistory.ITripHistory));
-    await Promise.all(tripHistories.map(TripHistory.save));
-    return { trip, tripHistories }
+  const tripHistories = users.map(
+    user =>
+      ({ user_id: user.id!, trip_id: trip.id! } as TripHistory.ITripHistory)
+  );
+  await Promise.all(tripHistories.map(TripHistory.save));
+  return { trip, tripHistories };
 }
 
 export async function getUsersByTripName(tripName: string) {
-    const trip = await findByName(tripName);
-    const snapshot = await db.collection('user')
-        .where('current_trip_id', '==', trip.id)
-        .get();
+  const trip = await findByName(tripName);
+  const snapshot = await db
+    .collection('user')
+    .where('current_trip_id', '==', trip.id)
+    .get();
 
-    if (snapshot.empty) {
-        throw new Error(errors.ERR_ENTITY_NOT_FOUND);
-    } 
+  if (snapshot.empty) {
+    throw new Error(errors.ERR_ENTITY_NOT_FOUND);
+  }
 
-    const users = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id } as User.IUser));
-    return users;
+  const users = snapshot.docs.map(
+    doc => ({ ...doc.data(), id: doc.id } as User.IUser)
+  );
+  return users;
 }
-
