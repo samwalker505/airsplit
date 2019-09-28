@@ -200,20 +200,86 @@ app.intent('split_bill', async (conv, { item, names, amount, currency }) => {
   conv.ask(res);
 });
 
-export const dialogflowFirebaseFulfillment = functions.https.onRequest(app);
+// export const generateCsv = functions.https.onRequest(async (req, res) => {
+//   const { username, tripname } = req.query;
+//   const payeeNames = (await Trip.getUsersByTripName(tripName)).map(
+//     u => user.name
+//   );
+//   const paymentSummary = await Transaction.getPayable({
+//     tripname,
+//     username,
+//     payeeNames
+//   });
+//   const csv = json2csv(paymentSummary);
+//   res.setHeader('Content-disposition', 'attachment; filename=report.csv');
+//   res.set('Content-Type', 'text/csv');
+//   res.status(200).send(csv);
+// });
 
 export const generateCsv = functions.https.onRequest(async (req, res) => {
-  const { username, tripname } = req.query;
+  const { username: userName, tripname: tripName } = req.query;
+  console.log(userName, tripName);
   const payeeNames = (await Trip.getUsersByTripName(tripName)).map(
-    u => user.name
+    user => user.name
   );
+  console.log('payeeNames', payeeNames);
   const paymentSummary = await Transaction.getPayable({
-    tripname,
-    username,
+    tripName,
+    userName,
     payeeNames
   });
+  console.log('payment summary', paymentSummary);
   const csv = json2csv(paymentSummary);
   res.setHeader('Content-disposition', 'attachment; filename=report.csv');
   res.set('Content-Type', 'text/csv');
   res.status(200).send(csv);
 });
+
+app.intent('i_owe_others', async (conv, { names, currency }) => {
+  const group_name = conv.user.storage.TripName; //TODO get trip name from CONTEXT
+  const my_name = conv.user.storage.name; //TODO get user name from STORAGE
+
+  const params = {
+    tripName: group_name,
+    payerNames: names,
+    payeeName: my_name,
+    currency: currency
+  };
+
+  const res = await Transaction.getPayable(params);
+  console.log('calculate amount owed: ', res.toString());
+  conv.ask(res.toString());
+});
+
+app.intent('others_owe_me', async (conv, { names, currency }) => {
+  const group_name = conv.user.storage.TripName; //TODO get trip name from CONTEXT
+  const my_name = conv.user.storage.name; //TODO get user name from STORAGE
+
+  const params = {
+    tripName: group_name,
+    payerNames: my_name,
+    payeeName: names,
+    currency: currency
+  };
+
+  const res = await Transaction.getPayable(params);
+
+  conv.ask(res);
+});
+
+// Sure, check out your trip report at:
+
+app.intent('request_report', (conv, {}) => {
+  const group_name = conv.user.storage.TripName; //TODO get trip name from CONTEXT
+  const my_name = conv.user.storage.name; //TODO get user name from STORAGE
+
+  const url =
+    'https://us-central1-airsplit-dbc3f.cloudfunctions.net/generateCsv?username=' +
+    my_name +
+    '&tripname=' +
+    group_name;
+
+  conv.ask('Sure! Please find the report at' + url);
+});
+
+export const dialogflowFirebaseFulfillment = functions.https.onRequest(app);
