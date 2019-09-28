@@ -52,7 +52,7 @@ export async function findByCounterParties(
       doc => ({ id: doc.id, ...doc.data() } as ITransaction)
     );
   }
-  throw new Error('Cannot find transaction');
+  return [];
 }
 
 export interface Bill {
