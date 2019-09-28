@@ -1,5 +1,7 @@
+import { parse as json2csv } from 'json2csv';
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+
 admin.initializeApp(functions.config().firebase);
 
 import {
@@ -106,3 +108,14 @@ app.intent('join_group', async (conv, { group_name, name }) => {
 });
 
 export const dialogflowFirebaseFulfillment = functions.https.onRequest(app);
+
+export const generateCsv = functions.https.onRequest(async (req, res) => {
+  const report = [{"price": 1}, {"price": 2}];
+  const csv = json2csv(report)
+  res.setHeader(
+    "Content-disposition",
+    "attachment; filename=report.csv"
+  )
+  res.set("Content-Type", "text/csv")
+  res.status(200).send(csv)
+});
