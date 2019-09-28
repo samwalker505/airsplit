@@ -110,9 +110,10 @@ app.intent('join_group', async (conv, { group_name, name }) => {
 export const dialogflowFirebaseFulfillment = functions.https.onRequest(app);
 
 export const generateCsv = functions.https.onRequest(async (req, res) => {
-  const { username } = req.query
-  const transactions = await Transaction.getPayableTransactions(username)
-  const csv = json2csv(transactions)
+  const { username, tripname } = req.query
+  const payeeNames = (await Trip.getUsersByTripName(tripName)).map(u => user.name);
+  const paymentSummary = await Transaction.getPayable(tripname, username, payeeNames);
+  const csv = json2csv(paymentSummary);
   res.setHeader(
     "Content-disposition",
     "attachment; filename=report.csv"
