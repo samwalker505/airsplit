@@ -40,11 +40,11 @@ export async function findByName(name: string): Promise<ITrip> {
 export async function create(params: {
   user_id: string;
   name: string;
-  currency?: Currency;
+  currency: Currency;
 }) {
   return {
     ...params,
-    currency: params.currency || null,
+    currency: params.currency,
     status: 'active' as TripStatus,
     created_at: new Date(),
     updated_at: new Date()
@@ -71,7 +71,7 @@ export async function save(trip: ITrip) {
 export async function findOrCreateTrip(params: {
   email: string;
   name: string;
-  currency?: Currency;
+  currency: Currency;
 }) {
   const { email, name, currency } = params;
   const user = await User.findByEmail(email);
@@ -81,7 +81,7 @@ export async function findOrCreateTrip(params: {
   if (await findByName(name)) {
     throw new Error(errors.ERR_DUPLICATE_KEY);
   }
-  const tripToSave: ITrip = create({
+  const tripToSave = await create({
     user_id: user.id!,
     name,
     currency

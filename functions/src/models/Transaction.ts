@@ -30,7 +30,7 @@ async function saveCreation(transaction: ITransaction) {
   });
 }
 
-async function saveUpdate(transaction: ITransaction) {
+export async function saveUpdate(transaction: ITransaction) {
   if (!transaction.id) throw new Error('Id is null for transaction');
   return await getCollection()
     .doc(transaction.id)
