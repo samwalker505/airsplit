@@ -1,39 +1,20 @@
-import * as admin from 'firebase-admin';
 import axios from 'axios';
-import { Currency } from './Currency';
+
+import { collection } from '../db';
 import * as Trip from './Trip';
 import * as User from './User';
 
-export interface ITransaction {
-  id?: string;
-  trip_id: string;
-  creditor_user_id: string;
-  debitor_user_id: string;
-  title: string;
-  amount: number;
-  currency: Currency;
-  remarks?: string;
-  created_at?: Date;
-  updated_at?: Date;
-}
-
-const db = admin.firestore();
-
-function getCollection() {
-  return db.collection('transaction');
-}
-
-async function saveCreation(transaction: ITransaction) {
-  return await getCollection().add({
+async function create(transaction: Transaction) {
+  return await collection('transaction').add({
     ...transaction,
     created_at: new Date(),
     updated_at: new Date()
   });
 }
 
-export async function saveUpdate(transaction: ITransaction) {
+export async function update(transaction: TransactionSchema) {
   if (!transaction.id) throw new Error('Id is null for transaction');
-  return await getCollection()
+  return await collection('transaction')
     .doc(transaction.id)
     .update({ ...transaction, updated_at: new Date() });
 }
@@ -41,15 +22,15 @@ export async function saveUpdate(transaction: ITransaction) {
 export async function findByCounterParties(
   creditorId: string,
   debitorId: string
-): Promise<ITransaction[]> {
-  const snapshot = await getCollection()
+): Promise<Transaction[]> {
+  const snapshot = await collection('transaction')
     .where('creditor_user_id', '==', creditorId)
     .where('debitor_user_id', '==', debitorId)
     .limit(1)
     .get();
   if (!snapshot.empty) {
     return snapshot.docs.map(
-      doc => ({ id: doc.id, ...doc.data() } as ITransaction)
+      doc => ({ id: doc.id, ...doc.data() } as TransactionSchema)
     );
   }
   return [];
@@ -61,7 +42,7 @@ export interface Bill {
   debitor: string;
   title: string;
   amount: number;
-  currency?: Currency;
+  currency?: string;
   remarks?: string;
 }
 
@@ -92,7 +73,7 @@ export async function splitNewBill(bill: Bill) {
     return creditor.id;
   });
 
-  if (bill.currency && Object.keys(Currency).includes(bill.currency)) {
+  if (bill.currency) {
     throw new Error('Currency ' + bill.currency + ' is not valid');
   }
   const currency = bill.currency || trip.currency;
@@ -102,10 +83,10 @@ export async function splitNewBill(bill: Bill) {
 
   return await Promise.all(
     creditorIds.map(id =>
-      saveCreation({
-        trip_id: trip.id as string,
+      create({
+        trip_id: trip.id,
         creditor_user_id: id,
-        debitor_user_id: debitor.id as string,
+        debitor_user_id: debitor.id,
         title: bill.title,
         amount: amount,
         currency: currency,
@@ -119,7 +100,7 @@ export interface PaymentSummary {
   payerName: string;
   payeeName: string;
   total: number;
-  base: Currency;
+  base: string;
   breakdown: { [currency: string]: number };
 }
 
@@ -132,7 +113,7 @@ async function getPaymentSummary({
   tripName: string;
   payerName: string;
   payeeName: string;
-  currency?: Currency;
+  currency?: string;
 }): Promise<PaymentSummary> {
   if (!tripName) {
     throw new Error('No trip name is specified.');
@@ -156,14 +137,11 @@ async function getPaymentSummary({
   const currencies = transactions
     .map(tx => tx.currency)
     .filter((value, i, self) => self.indexOf(value) === i);
-  const url = `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${[baseCurrency, ...currencies].join(
-    ','
-  )}`;
-  console.log('get currency list', url);
-  const { data: { rates } } = await axios.get(url);
-  console.log(rates);
-  console.log(transactions);
-  
+  const { data: rates } = await axios.get(
+    `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${baseCurrency},${currencies.join(
+      ','
+    )}`
+  );
 
   const breakdown: { [currency: string]: number } = transactions.reduce(
     (acc, cur) => {
@@ -184,17 +162,12 @@ async function getPaymentSummary({
   };
 }
 
-export async function getReceivable({
-  tripName,
-  userName,
-  payerNames,
-  currency
-}: {
-  tripName: string;
-  userName: string;
-  payerNames: string[];
-  currency?: Currency;
-}) {
+export async function getReceivable(
+  tripName: string,
+  userName: string,
+  payerNames: string[],
+  currency?: string
+) {
   return Promise.all(
     payerNames.map(payerName =>
       getPaymentSummary({
@@ -207,17 +180,12 @@ export async function getReceivable({
   );
 }
 
-export async function getPayable({
-  tripName,
-  userName,
-  payeeNames,
-  currency
-}: {
-  tripName: string;
-  userName: string;
-  payeeNames: string[];
-  currency?: Currency;
-}) {
+export async function getPayable(
+  tripName: string,
+  userName: string,
+  payeeNames: string[],
+  currency?: string
+) {
   return Promise.all(
     payeeNames.map(payeeName =>
       getPaymentSummary({

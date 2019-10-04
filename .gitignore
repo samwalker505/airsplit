@@ -1,3 +1,11 @@
+lib/
+build/
+dist/
+
+typings/npm/
+typings/yarn/
+node_modules/
+
 # Logs
 logs
 *.log

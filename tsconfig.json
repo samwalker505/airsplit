@@ -3,16 +3,16 @@
     "module": "commonjs",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
-    "outDir": "lib",
     "sourceMap": true,
     "strict": true,
     "checkJs": false,
     "allowJs": true,
     "target": "es2017",
-    "lib": ["es2019"],
-    "esModuleInterop": true
+    "lib": ["esnext"],
+    "esModuleInterop": true,
+    "typeRoots": ["functions/typings", "node_modules/@types"]
   },
   "compileOnSave": true,
-  "include": ["src"]
-  // "exclude": ["**/index.ts"]
+  "include": ["functions/typings", "functions/src", "functions/index.js"],
+  "exclude": ["functions/build"]
 }

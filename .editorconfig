@@ -1,0 +1,11 @@
+root = true
+
+[*]
+end_of_line = lf
+
+[**/*.{js,ts,json,yaml}]
+charset = utf-8
+
+[**/*.{js,ts,json,yaml}]
+indent_style = space
+indent_size = 2
