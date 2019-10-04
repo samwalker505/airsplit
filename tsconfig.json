@@ -10,9 +10,9 @@
     "target": "es2017",
     "lib": ["esnext"],
     "esModuleInterop": true,
-    "typeRoots": ["functions/typings", "node_modules/@types"]
+    "typeRoots": ["typings", "node_modules/@types"]
   },
   "compileOnSave": true,
-  "include": ["functions/typings", "functions/src", "functions/index.js"],
-  "exclude": ["functions/build"]
+  "include": ["typings", "src"],
+  "exclude": ["build"]
 }

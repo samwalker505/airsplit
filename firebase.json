@@ -4,6 +4,7 @@
     "indexes": "firestore.indexes.json"
   },
   "functions": {
+    "source": ".",
     "predeploy": ["yarn lint", "yarn build"]
   }
 }
