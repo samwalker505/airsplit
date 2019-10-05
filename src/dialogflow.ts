@@ -87,7 +87,6 @@ app.intent<{ group_name: string; name: string; currency_name: string }>(
 app.intent<{ group_name: string; name: string }>(
   'join_group',
   async (conv, { group_name, name }) => {
-    // Respond with the user's lucky number and end the conversation.
     //TODO: call join group(group_name, name)
     //      if group not exist then return
 
@@ -187,22 +186,6 @@ app.intent<{ item: string; names: string[]; amount: number; currency: string }>(
   }
 );
 
-// export const generateCsv = functions.https.onRequest(async (req, res) => {
-//   const { username, tripname } = req.query;
-//   const payeeNames = (await Trip.getUsersByTripName(tripName)).map(
-//     u => user.name
-//   );
-//   const paymentSummary = await Transaction.getPayable({
-//     tripname,
-//     username,
-//     payeeNames
-//   });
-//   const csv = json2csv(paymentSummary);
-//   res.setHeader('Content-disposition', 'attachment; filename=report.csv');
-//   res.set('Content-Type', 'text/csv');
-//   res.status(200).send(csv);
-// });
-
 app.intent<{ names: string[]; currency: string }>(
   'i_owe_others',
   async (conv, { names: payeeNames, currency }) => {
@@ -246,7 +229,7 @@ app.intent('request_report', conv => {
     '&tripname=' +
     group_name;
 
-  conv.ask('Sure! Please find the report at' + url);
+  conv.ask('Sure! Please find the report at ' + url);
 });
 
 export default app;
