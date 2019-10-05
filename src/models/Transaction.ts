@@ -104,17 +104,12 @@ export interface PaymentSummary {
   breakdown: { [currency: string]: number };
 }
 
-async function getPaymentSummary({
-  tripName,
-  payerName,
-  payeeName,
-  currency
-}: {
-  tripName: string;
-  payerName: string;
-  payeeName: string;
-  currency?: string;
-}): Promise<PaymentSummary> {
+async function getPaymentSummary(
+  tripName: string,
+  payerName: string,
+  payeeName: string,
+  currency?: string
+): Promise<PaymentSummary> {
   if (!tripName) {
     throw new Error('No trip name is specified.');
   }
@@ -164,36 +159,26 @@ async function getPaymentSummary({
 
 export async function getReceivable(
   tripName: string,
-  userName: string,
+  payeeName: string,
   payerNames: string[],
   currency?: string
 ) {
   return Promise.all(
     payerNames.map(payerName =>
-      getPaymentSummary({
-        tripName,
-        payerName,
-        payeeName: userName,
-        currency
-      })
+      getPaymentSummary(tripName, payerName, payeeName, currency)
     )
   );
 }
 
 export async function getPayable(
   tripName: string,
-  userName: string,
+  payerName: string,
   payeeNames: string[],
   currency?: string
 ) {
   return Promise.all(
     payeeNames.map(payeeName =>
-      getPaymentSummary({
-        tripName,
-        payerName: userName,
-        payeeName,
-        currency
-      })
+      getPaymentSummary(tripName, payerName, payeeName, currency)
     )
   );
 }

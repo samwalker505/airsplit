@@ -214,7 +214,7 @@ app.intent<{ names: string[]; currency: string }>(
       payeeNames,
       currency
     );
-    console.log('Calculate amount owed: ', res.toString());
+    console.log('Calculate amount owed: ' + res);
     conv.ask(res.toString());
   }
 );
@@ -230,7 +230,8 @@ app.intent<{ names: string[]; currency: string }>(
       payerNames,
       currency
     );
-    conv.ask(res);
+    console.log('Calculate amount owed: ' + res);
+    conv.ask(res.toString());
   }
 );
 
