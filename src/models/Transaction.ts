@@ -21,13 +21,30 @@ export async function update(transaction: TransactionSchema) {
 
 export async function findByCounterParties(
   creditorId: string,
-  debitorId: string
+  debitorId: string,
+  tripId: string
 ): Promise<Transaction[]> {
-  console.log('debitorId: ', debitorId);
-  console.log('creditorId: ', creditorId);
   const snapshot = await collection('transaction')
     .where('creditor_user_id', '==', creditorId)
     .where('debitor_user_id', '==', debitorId)
+    .where('trip_id', '==', tripId)
+    .limit(1)
+    .get();
+  if (!snapshot.empty) {
+    return snapshot.docs.map(
+      doc => ({ id: doc.id, ...doc.data() } as TransactionSchema)
+    );
+  }
+  return [];
+}
+
+export async function findPayableTransactions(
+  creditorId: string,
+  tripId: string
+): Promise<Transaction[]> {
+  const snapshot = await collection('transaction')
+    .where('creditor_user_id', '==', creditorId)
+    .where('trip_id', '==', tripId)
     .limit(1)
     .get();
   if (!snapshot.empty) {
@@ -128,7 +145,7 @@ async function getPaymentSummary(
   const payee = await User.findByName(payeeName);
   if (!payee.id) throw new Error('User ' + payee.name + ' does not have an id');
 
-  const transactions = await findByCounterParties(payer.id, payee.id);
+  const transactions = await findByCounterParties(payer.id, payee.id, trip.id);
 
   const baseCurrency = currency || trip.currency;
   const currencies = transactions
@@ -138,10 +155,10 @@ async function getPaymentSummary(
 
   const url = `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${currencies.join(
     ','
-  )}`
-  console.log(url);
-  const { data: { rates } } = await axios.get(url);
-  console.log(JSON.stringify(rates));
+  )}`;
+  const {
+    data: { rates }
+  } = await axios.get(url);
 
   const breakdown: { [currency: string]: number } = transactions.reduce(
     (acc, cur) => {
@@ -150,10 +167,6 @@ async function getPaymentSummary(
     },
     {} as { [currency: string]: number }
   );
-
-  console.log(JSON.stringify(transactions));
-
-  console.log(JSON.stringify(breakdown));
 
   return {
     payerName,
@@ -190,4 +203,26 @@ export async function getPayable(
       getPaymentSummary(tripName, payerName, payeeName, currency)
     )
   );
+}
+
+export async function getPayableTransactions({
+  tripName,
+  userName
+}: {
+  tripName: string;
+  userName: string;
+}) {
+  if (!tripName) {
+    throw new Error('No trip name is specified.');
+  }
+  const trip = await Trip.findByName(tripName);
+  if (!trip.id) {
+    throw new Error('Trip ' + tripName + ' has a null id');
+  }
+
+  const user = await User.findByName(userName);
+  if (!user.id) {
+    throw new Error('User ' + user.name + ' does not have an id');
+  }
+  return findPayableTransactions(user.id!, trip.id!);
 }

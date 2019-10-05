@@ -1,27 +1,33 @@
-import { parse as json2csv } from 'json2csv';
-import * as functions from 'firebase-functions';
 
-import * as Trip from './models/Trip';
+import express from 'express';
+import consolidate from 'consolidate';
 import * as Transaction from './models/Transaction';
 
-export default async function report(
-  req: functions.https.Request,
-  res: functions.Response
-) {
+const app = express();
+
+app.engine('pug', consolidate.pug);
+app.set('views', `${__dirname}/../views`);
+app.set('view engine', 'pug');
+
+app.get('/', async (req, res, next) => {
   const { username: userName, tripname: tripName } = req.query;
-  console.log(userName, tripName);
-  const payeeNames = (await Trip.getUsersByTripName(tripName)).map(
-    user => user.name
-  );
-  console.log('payeeNames', payeeNames);
-  const paymentSummary = await Transaction.getPayable(
-    tripName,
-    userName,
-    payeeNames
-  );
-  console.log('payment summary', paymentSummary);
-  const csv = json2csv(paymentSummary);
-  res.setHeader('Content-disposition', 'attachment; filename=report.csv');
-  res.set('Content-Type', 'text/csv');
-  res.status(200).send(csv);
-}
+  try {
+    console.log(userName, tripName);
+    const transactions = await Transaction.getPayableTransactions({
+      tripName,
+      userName,
+    });
+  
+    return res.render('index', { transactions, tripName, userName });
+  } catch (err) {
+
+    next(err);  
+  }
+})
+
+app.use((err: any, req: any, res: any, next: any) => {
+  res.status(500)
+  res.render('error', { error: err })
+})
+
+export default app;

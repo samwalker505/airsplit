@@ -224,7 +224,7 @@ app.intent('request_report', conv => {
   const my_name = conv.user.storage.name; //TODO get user name from STORAGE
 
   const url =
-    'https://us-central1-airsplit-dbc3f.cloudfunctions.net/generateCsv?username=' +
+    'https://airsplit-dbc3f.firebaseapp.com?username=' +
     my_name +
     '&tripname=' +
     group_name;
