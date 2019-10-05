@@ -23,6 +23,8 @@ export async function findByCounterParties(
   creditorId: string,
   debitorId: string
 ): Promise<Transaction[]> {
+  console.log('debitorId: ', debitorId);
+  console.log('creditorId: ', creditorId);
   const snapshot = await collection('transaction')
     .where('creditor_user_id', '==', creditorId)
     .where('debitor_user_id', '==', debitorId)
@@ -132,11 +134,14 @@ async function getPaymentSummary(
   const currencies = transactions
     .map(tx => tx.currency)
     .filter((value, i, self) => self.indexOf(value) === i);
-  const { data: rates } = await axios.get(
-    `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${baseCurrency},${currencies.join(
-      ','
-    )}`
-  );
+  currencies.push(baseCurrency);
+
+  const url = `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${currencies.join(
+    ','
+  )}`
+  console.log(url);
+  const { data: { rates } } = await axios.get(url);
+  console.log(JSON.stringify(rates));
 
   const breakdown: { [currency: string]: number } = transactions.reduce(
     (acc, cur) => {
@@ -145,6 +150,10 @@ async function getPaymentSummary(
     },
     {} as { [currency: string]: number }
   );
+
+  console.log(JSON.stringify(transactions));
+
+  console.log(JSON.stringify(breakdown));
 
   return {
     payerName,
