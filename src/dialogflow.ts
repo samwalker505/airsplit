@@ -1,4 +1,7 @@
-import { dialogflow, Permission } from 'actions-on-google';
+import { 
+  dialogflow, 
+  Permission,
+} from 'actions-on-google';
 
 import * as User from './models/User';
 import * as Transaction from './models/Transaction';
@@ -11,7 +14,10 @@ const app = dialogflow<any, any, any, any>({
 
 // // Handle the Dialogflow intent named 'Default Welcome Intent'.
 app.intent('Default Welcome Intent', conv => {
+  // console.log('default welcome entered');
+  // conv.ask('how are you?');
   const name = conv.user.storage.userName;
+
   if (!name) {
     // Asks the user's permission to know their name, for personalization.
     conv.ask(
@@ -21,14 +27,6 @@ app.intent('Default Welcome Intent', conv => {
       })
     );
   } else {
-    // conv.context.set({
-    //   name: 'user',
-    //   lifespan: 99,
-    //   parameters: {
-    //     name: name
-    //   }
-    // });
-
     conv.data.name = name;
     conv.ask(`Hi again, ${name}. Having a fun trip?`);
   }
@@ -174,7 +172,7 @@ app.intent<{ item: string; names: string[]; amount: number; currency: string }>(
     //   names
     // );
     res =
-      'Ok, billed amount' +
+      'Ok, billed amount ' +
       amount +
       ' ' +
       currency +
@@ -189,23 +187,24 @@ app.intent<{ item: string; names: string[]; amount: number; currency: string }>(
 app.intent<{ names: string[]; currency: string }>(
   'i_owe_others',
   async (conv, { names: payeeNames, currency }) => {
-    const tripName = conv.user.storage.TripName; //TODO get trip name from CONTEXT
+    const tripName = conv.user.storage.tripName; //TODO get trip name from CONTEXT
     const userName = conv.user.storage.name; //TODO get user name from STORAGE
-    const res = await Transaction.getPayable(
+    const summaries = await Transaction.getPayable(
       tripName,
       userName,
       payeeNames,
       currency
     );
+    const res = summaries.map((summary) => `you owe ${summary.payeeName} ${summary.total}`).join(', ');
     console.log('Calculate amount owed: ' + res);
-    conv.ask(res.toString());
+    conv.ask(res);
   }
 );
 
 app.intent<{ names: string[]; currency: string }>(
   'others_owe_me',
   async (conv, { names: payerNames, currency }) => {
-    const tripName = conv.user.storage.TripName; //TODO get trip name from CONTEXT
+    const tripName = conv.user.storage.tripName; //TODO get trip name from CONTEXT
     const userName = conv.user.storage.name; //TODO get user name from STORAGE
     const res = await Transaction.getReceivable(
       tripName,
@@ -220,7 +219,7 @@ app.intent<{ names: string[]; currency: string }>(
 
 // Sure, check out your trip report at:
 app.intent('request_report', conv => {
-  const group_name = conv.user.storage.TripName; //TODO get trip name from CONTEXT
+  const group_name = conv.user.storage.tripName; //TODO get trip name from CONTEXT
   const my_name = conv.user.storage.name; //TODO get user name from STORAGE
 
   const url =

@@ -92,9 +92,6 @@ export async function splitNewBill(bill: Bill) {
     return creditor.id;
   });
 
-  if (bill.currency) {
-    throw new Error('Currency ' + bill.currency + ' is not valid');
-  }
   const currency = bill.currency || trip.currency;
 
   if (!bill.amount) throw new Error("Bill doesn't have an amount");
@@ -152,7 +149,6 @@ async function getPaymentSummary(
     .map(tx => tx.currency)
     .filter((value, i, self) => self.indexOf(value) === i);
   currencies.push(baseCurrency);
-
   const url = `https://api.exchangeratesapi.io/latest?base=${baseCurrency}&symbols=${currencies.join(
     ','
   )}`;
@@ -172,7 +168,7 @@ async function getPaymentSummary(
     payerName,
     payeeName,
     total: Object.entries(breakdown)
-      .map(([key, value]) => (value * rates[key]) / rates[baseCurrency])
+      .map(([key, value]) => value / rates[key] / rates[baseCurrency])
       .reduce((acc, cur) => acc + cur, 0),
     base: baseCurrency,
     breakdown

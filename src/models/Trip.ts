@@ -42,7 +42,7 @@ export async function findOrCreateTrip(params: {
     await create({
       user_id: user.id,
       name,
-      currency,
+      currency: currency || 'USD',
       status: 'active' as TripStatus
     });
     return findByName(name);
