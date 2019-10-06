@@ -1,3 +1,5 @@
+![AirSplit](public/images/airsplit-logo.png)
+
 # AirSplit | Split your bills in the air
 
 ## Project 
