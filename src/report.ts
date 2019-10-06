@@ -23,11 +23,11 @@ app.get('/', async (req, res, next) => {
 
     next(err);  
   }
-})
+});
 
 app.use((err: any, req: any, res: any, next: any) => {
   res.status(500)
   res.render('error', { error: err })
-})
+});
 
 export default app;

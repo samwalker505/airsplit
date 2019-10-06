@@ -75,9 +75,11 @@ app.intent<{ group_name: string; name: string; currency_name: string }>(
       email: name
     };
     const trip = await Trip.findOrCreateTrip(trip_params);
+    await Trip.joinTrip({ email: name, tripName: group_name });
+
     console.log('trip created');
     console.log(trip);
-    conv.data.tripName = group_name;
+    conv.user.storage.tripName = group_name;
     conv.ask('Your trip "' + group_name + '" is created!');
   }
 );
@@ -128,7 +130,7 @@ app.intent<{ group_name: string; name: string }>(
 //   conv.ask(`Alright, I forgot your last result.`);
 // });
 
-app.intent<{ item: string; names: string[]; amount: number; currency: string }>(
+app.intent<{ item: string; names: string[]; amount: number; currency?: string }>(
   'split_bill',
   async (conv, { item, names, amount, currency }) => {
     console.log('SPLITTING BILL');
@@ -138,7 +140,11 @@ app.intent<{ item: string; names: string[]; amount: number; currency: string }>(
     const debitor = storage.name; //TODO get user name from STORAGE
     console.log('group name', group_name);
     console.log('debitors', debitor);
+
+    // add myself for spliting
+    names.push(debitor);
     const creditors = names; //list of names
+
     console.log('CREDITORS: ', creditors);
     let res = '';
 
@@ -153,7 +159,7 @@ app.intent<{ item: string; names: string[]; amount: number; currency: string }>(
         debitor: debitor,
         title: item,
         amount: amount,
-        currency: 'USD'
+        currency: currency || 'USD' 
       };
 
       console.log('Spliting bill: ', billParam);
@@ -195,7 +201,8 @@ app.intent<{ names: string[]; currency: string }>(
       payeeNames,
       currency
     );
-    const res = summaries.map((summary) => `you owe ${summary.payeeName} ${summary.total}`).join(', ');
+
+    const res = summaries.map((summary) => `you owe ${summary.payeeName} ${currency || ''} ${summary.total}`).join(', ');
     console.log('Calculate amount owed: ' + res);
     conv.ask(res);
   }
@@ -206,14 +213,15 @@ app.intent<{ names: string[]; currency: string }>(
   async (conv, { names: payerNames, currency }) => {
     const tripName = conv.user.storage.tripName; //TODO get trip name from CONTEXT
     const userName = conv.user.storage.name; //TODO get user name from STORAGE
-    const res = await Transaction.getReceivable(
+    const summaries = await Transaction.getReceivable(
       tripName,
       userName,
       payerNames,
       currency
     );
+    const res = summaries.map((summary) => ` ${summary.payerName} owes you ${currency || ''} ${summary.total}`).join(', ');
     console.log('Calculate amount owed: ' + res);
-    conv.ask(res.toString());
+    conv.ask(res);
   }
 );
 

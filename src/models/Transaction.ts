@@ -28,7 +28,6 @@ export async function findByCounterParties(
     .where('creditor_user_id', '==', creditorId)
     .where('debitor_user_id', '==', debitorId)
     .where('trip_id', '==', tripId)
-    .limit(1)
     .get();
   if (!snapshot.empty) {
     return snapshot.docs.map(
@@ -45,7 +44,6 @@ export async function findPayableTransactions(
   const snapshot = await collection('transaction')
     .where('creditor_user_id', '==', creditorId)
     .where('trip_id', '==', tripId)
-    .limit(1)
     .get();
   if (!snapshot.empty) {
     return snapshot.docs.map(
