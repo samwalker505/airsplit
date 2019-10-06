@@ -1,6 +1,6 @@
-![AirSplit](public/images/airsplit-logo.png)
+ <center><img src="public/images/airsplit-logo.png" width=250></center>
 
-# AirSplit | Split your bills in the air
+<center><h1>AirSplit | Split your bills in the air</h1></center>
 
 ## Project 
 
